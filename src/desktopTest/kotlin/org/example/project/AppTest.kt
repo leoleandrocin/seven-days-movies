@@ -1,6 +1,8 @@
 package org.example.project
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -26,8 +28,31 @@ class AppTest {
             .onNodeWithText("Rate: 8.4  |  Year: 2019")
             .assertIsDisplayed()
 
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule
+                .onAllNodes(hasContentDescription("Logo Avengers EndGame"))
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
         composeTestRule
             .onNodeWithContentDescription("Logo Avengers EndGame")
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun `should show error message when image fails`() {
+        composeTestRule.setContent {
+            App(imageUrl = "https://link-invalido-que-vai-falhar.com/poster.jpg")
+        }
+
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule
+                .onAllNodes(hasText("Error trying to load the image!"))
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeTestRule
+            .onNodeWithText("Error trying to load the image!")
             .assertIsDisplayed()
     }
 }
