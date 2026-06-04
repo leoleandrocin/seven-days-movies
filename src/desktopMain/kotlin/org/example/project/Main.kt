@@ -1,5 +1,6 @@
 package org.example.project
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -7,11 +8,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -19,21 +23,14 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
-import coil3.ImageLoader
-import coil3.compose.AsyncImage
-import coil3.compose.AsyncImagePainter
-import coil3.compose.setSingletonImageLoaderFactory
-import coil3.network.ktor3.KtorNetworkFetcherFactory
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
+import java.net.HttpURLConnection
+import java.net.URL
+import org.jetbrains.skia.Image as SkiaImage
 
 fun main() = application {
-    setSingletonImageLoaderFactory { context ->
-        ImageLoader.Builder(context)
-            .components {
-                add(KtorNetworkFetcherFactory())
-            }
-            .build()
-    }
-
     val windowState = rememberWindowState(width = 400.dp, height = 500.dp)
 
     Window(
@@ -46,7 +43,41 @@ fun main() = application {
 }
 
 @Composable
-fun App() {
+fun App(imageUrl: String = "https://upload.wikimedia.org/wikipedia/pt/9/9b/Avengers_Endgame.jpg") {
+    val (imageBitmap, isLoading, isError) = setUpImage(imageUrl)
+    load(isLoading, isError, imageBitmap)
+}
+
+@Composable
+private fun setUpImage(imageUrl: String): Triple<ImageBitmap?, Boolean, Boolean> {
+    var imageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+    var isError by remember { mutableStateOf(false) }
+
+    LaunchedEffect(imageUrl) {
+        withContext(Dispatchers.IO) {
+            try {
+                println("Starting image download manually...")
+                val bitmap = imageUrl.loadAsComposeBitmap()
+                imageBitmap = bitmap
+                isLoading = false
+                println("Image loaded and converted with success!")
+            } catch (e: Exception) {
+                e.printStackTrace()
+                isError = true
+                isLoading = false
+            }
+        }
+    }
+    return Triple(imageBitmap, isLoading, isError)
+}
+
+@Composable
+private fun load(
+    isLoading: Boolean,
+    isError: Boolean,
+    imageBitmap: ImageBitmap?
+) {
     MaterialTheme {
         Column(
             modifier = Modifier
@@ -64,27 +95,24 @@ fun App() {
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            AsyncImage(
-                model = "https://upload.wikimedia.org/wikipedia/pt/9/9b/Avengers_Endgame.jpg",
-                contentDescription = "Logo Avengers EndGame",
-                contentScale = ContentScale.Fit,
-                modifier = Modifier.size(250.dp),
-                onState = { state ->
-                    when (state) {
-                        is AsyncImagePainter.State.Loading -> {
-                            println("Coil: Loading the image...")
-                        }
-                        is AsyncImagePainter.State.Success -> {
-                            println("Coil: Image loaded com success!")
-                        }
-                        is AsyncImagePainter.State.Error -> {
-                            println("Coil: Error trying to load the image!")
-                            state.result.throwable.printStackTrace()
-                        }
-                        else -> {}
-                    }
+            when {
+                isLoading -> {
+                    CircularProgressIndicator(modifier = Modifier.size(50.dp))
                 }
-            )
+
+                isError || imageBitmap == null -> {
+                    Text("Error trying to load the image!", color = MaterialTheme.colorScheme.error)
+                }
+
+                else -> {
+                    Image(
+                        bitmap = imageBitmap,
+                        contentDescription = "Logo Avengers EndGame",
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.size(250.dp)
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -96,3 +124,36 @@ fun App() {
         }
     }
 }
+
+fun String.loadAsComposeBitmap(): ImageBitmap {
+    val connection = URL(this).openConnection() as HttpURLConnection
+    connection.connectTimeout = 5000
+    connection.readTimeout = 5000
+    connection.requestMethod = "GET"
+
+    connection.setRequestProperty("User-Agent", "Mozilla/5.0")
+
+    if (connection.responseCode != HttpURLConnection.HTTP_OK) {
+        throw Exception("Fail to download the image. HTTP code: ${connection.responseCode}")
+    }
+
+    val inputStream = connection.inputStream
+    val outputStream = ByteArrayOutputStream()
+
+    inputStream.use { input ->
+        outputStream.use { output ->
+            val buffer = ByteArraySize(4096)
+            var bytesRead: Int
+            while (input.read(buffer).also { bytesRead = it } != -1) {
+                output.write(buffer, 0, bytesRead)
+            }
+        }
+    }
+
+    val imageBytes = outputStream.toByteArray()
+    val skiaImage = SkiaImage.makeFromEncoded(imageBytes)
+
+    return skiaImage.toComposeImageBitmap()
+}
+
+private fun ByteArraySize(size: Int) = ByteArray(size)
