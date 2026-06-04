@@ -21,6 +21,7 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import coil3.ImageLoader
 import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
 import coil3.compose.setSingletonImageLoaderFactory
 import coil3.network.ktor3.KtorNetworkFetcherFactory
 
@@ -70,13 +71,13 @@ fun App() {
                 modifier = Modifier.size(250.dp),
                 onState = { state ->
                     when (state) {
-                        is coil3.compose.AsyncImagePainter.State.Loading -> {
+                        is AsyncImagePainter.State.Loading -> {
                             println("Coil: Loading the image...")
                         }
-                        is coil3.compose.AsyncImagePainter.State.Success -> {
+                        is AsyncImagePainter.State.Success -> {
                             println("Coil: Image loaded com success!")
                         }
-                        is coil3.compose.AsyncImagePainter.State.Error -> {
+                        is AsyncImagePainter.State.Error -> {
                             println("Coil: Error trying to load the image!")
                             state.result.throwable.printStackTrace()
                         }
