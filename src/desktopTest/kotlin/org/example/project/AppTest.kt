@@ -25,7 +25,15 @@ class AppTest {
             .assertIsDisplayed()
 
         composeTestRule
-            .onNodeWithText("Rate: 8.4  |  Year: 2019")
+            .onNodeWithText("2019")
+            .assertIsDisplayed()
+
+        composeTestRule
+            .onNodeWithText("8.4")
+            .assertIsDisplayed()
+
+        composeTestRule
+            .onNodeWithContentDescription("Troféu de Nota")
             .assertIsDisplayed()
 
         composeTestRule.waitUntil(timeoutMillis = 5000) {
