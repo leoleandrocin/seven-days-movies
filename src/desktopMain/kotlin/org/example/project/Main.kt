@@ -1,19 +1,31 @@
 package org.example.project
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -78,49 +90,107 @@ private fun load(
     isError: Boolean,
     imageBitmap: ImageBitmap?
 ) {
-    MaterialTheme {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+    val darkColors = darkColorScheme(
+        background = Color(0xFF121212),
+        surface = Color(0xFF1E1E1E),
+        primary = Color(0xFFFFD700),
+        secondary = Color(0xFF64B5F6)
+    )
+
+    MaterialTheme(colorScheme = darkColors) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
         ) {
-            Text(
-                text = "Avengers - EndGame",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.headlineMedium
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(280.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surface),
+                    contentAlignment = Alignment.Center
+                ) {
+                    when {
+                        isLoading -> {
+                            CircularProgressIndicator(modifier = Modifier.size(50.dp))
+                        }
 
-            Spacer(modifier = Modifier.height(20.dp))
+                        isError || imageBitmap == null -> {
+                            Text("Error trying to load the image!", color = MaterialTheme.colorScheme.error)
+                        }
 
-            when {
-                isLoading -> {
-                    CircularProgressIndicator(modifier = Modifier.size(50.dp))
+                        else -> {
+                            Image(
+                                bitmap = imageBitmap,
+                                contentDescription = "Logo Avengers EndGame",
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier.size(250.dp)
+                            )
+                        }
+                    }
                 }
 
-                isError || imageBitmap == null -> {
-                    Text("Error trying to load the image!", color = MaterialTheme.colorScheme.error)
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.surface)
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.EmojiEvents,
+                            contentDescription = "Troféu de Nota",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "8.4",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.surface)
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = "2019",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.secondary // Cor Azul em destaque
+                        )
+                    }
                 }
 
-                else -> {
-                    Image(
-                        bitmap = imageBitmap,
-                        contentDescription = "Logo Avengers EndGame",
-                        contentScale = ContentScale.Fit,
-                        modifier = Modifier.size(250.dp)
-                    )
-                }
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text(
+                    text = "Avengers - EndGame",
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White,
+                    style = MaterialTheme.typography.headlineMedium
+                )
             }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Text(
-                text = "Rate: 8.4  |  Year: 2019",
-                fontSize = 16.sp,
-                style = MaterialTheme.typography.bodyLarge
-            )
         }
     }
 }
